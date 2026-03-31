@@ -1,0 +1,12 @@
+kill_switch: false
+logging:
+  enabled: true
+  file: logs/enforcement_logs.jsonl
+karma_confidence_threshold: -0.5
+karma_confidence_thresholds:
+  EU: -0.2
+env: demo
+karma_confidence_threshold_overlays:
+  demo:
+    EU: -0.1
+    IN: -0.4

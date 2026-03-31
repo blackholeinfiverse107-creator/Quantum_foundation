@@ -1,0 +1,43 @@
+{
+  "failure_resilience_matrix": {
+    "version": "1.0",
+    "objective": "Ensure ARL provides safe, graceful degradation under all failure conditions.",
+    "scenarios": [
+      {
+        "id": "FAIL_001",
+        "condition": "Missing Input Fields",
+        "trigger": "Input JSON missing 'behavioral_state' or 'confidence'",
+        "expected_behavior": "Default to 'neutral' state, confidence 1.0 (assume safe if not flagged).",
+        "output_tone": "NEUTRAL_COMPANION"
+      },
+      {
+        "id": "FAIL_002",
+        "condition": "Conflicting Signals",
+        "trigger": "High confidence (0.9) but 'blocked' constraint present.",
+        "expected_behavior": "Safety constraint overrides confidence.",
+        "output_tone": "PROTECTIVE"
+      },
+      {
+        "id": "FAIL_003",
+        "condition": "Corrupt Payload",
+        "trigger": "Input data is None or malformed JSON.",
+        "expected_behavior": "Catch exception, return Generic Safety Refusal.",
+        "output_tone": "PROTECTIVE"
+      },
+      {
+        "id": "FAIL_004",
+        "condition": "Upstream Timeout",
+        "trigger": "Context summary missing or null.",
+        "expected_behavior": "Proceed without context, rely on immediate input.",
+        "output_tone": "CASUAL"
+      },
+      {
+        "id": "FAIL_005",
+        "condition": "Extreme Inputs",
+        "trigger": "Message content > 5000 chars or binary data.",
+        "expected_behavior": "Truncate or ignore, return 'I didn't catch that'.",
+        "output_tone": "NEUTRAL_COMPANION"
+      }
+    ]
+  }
+}

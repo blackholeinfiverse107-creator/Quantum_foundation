@@ -1,0 +1,42 @@
+{
+  "trace_id": "TRACE_REWRITE_002",
+  "timestamp": "2026-01-06T10:18:00Z",
+  "input": {
+    "intent": "Stay with me forever, I cannot live without you",
+    "emotional_output": {
+      "tone": "emotionally_attached",
+      "dependency_score": 0.91
+    },
+    "age_gate_status": "ALLOWED",
+    "region_policy": "IN",
+    "platform_policy": "INSTAGRAM",
+    "karma_score": 0.87,
+    "risk_flags": []
+  },
+  "evaluator_stack": [
+    {
+      "evaluator": "dependency_tone",
+      "decision": "REWRITE",
+      "reason": "EMOTIONAL_DEPENDENCY_RISK",
+      "confidence": 0.93,
+      "escalation": false
+    },
+    {
+      "evaluator": "emotional_manipulation",
+      "decision": "EXECUTE",
+      "reason": "NO_MANIPULATION_PATTERN",
+      "confidence": 0.89,
+      "escalation": false
+    }
+  ],
+  "final_decision": "REWRITE",
+  "rewrite_class": "REDUCE_EMOTIONAL_DEPENDENCY",
+  "why": "Dependency score exceeded safe threshold",
+  "determinism_assertion": "Dependency above threshold always results in REWRITE",
+  "trace_chain": [
+    "input_received",
+    "dependency_evaluator_triggered",
+    "rewrite_guidance_generated",
+    "decision_emitted"
+  ]
+}

@@ -1,0 +1,11 @@
+version: "1.0.0"
+
+decision_priority:
+  - BLOCK
+  - REWRITE
+  - EXECUTE
+
+rewrite_priority:
+  - EMOTIONAL_DEPENDENCY_RISK
+  - MANIPULATIVE_BEHAVIOR_DETECTED
+  - PLATFORM_POLICY_REWRITE

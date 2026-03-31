@@ -123,9 +123,9 @@ class SyncReport:
 
     def summary(self) -> str:
         if self.consensus:
-            return f"SYNC causal_id={self.causal_id}: CONSENSUS ✓ (all {len(self.node_hashes)} nodes agree)"
+            return f"SYNC causal_id={self.causal_id}: CONSENSUS [OK] (all {len(self.node_hashes)} nodes agree)"
         else:
-            return (f"SYNC causal_id={self.causal_id}: DIVERGENCE ✗ "
+            return (f"SYNC causal_id={self.causal_id}: DIVERGENCE [X] "
                     f"— diverged={self.diverged_nodes}")
 
 
@@ -191,6 +191,7 @@ class ProtocolNode(PropagatingStateNode):
 
         if event.step_type == "SYNC":
             # SYNC is a no-op on state — just report current hash
+            self.next_expected_causal_id = event.causal_id + 1
             ack = AckMessage(
                 causal_id=event.causal_id,
                 proposal_id=event.proposal_id,

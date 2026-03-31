@@ -1,0 +1,91 @@
+{
+  "version": "1.0",
+  "goal": "ARL remains strong under disaster scenarios with graceful, deterministic outputs.",
+  "scenarios": [
+    {
+      "name": "missing_signals",
+      "input": {
+        "text": "test",
+        "meta": null,
+        "age_state": "ALLOWED",
+        "region_state": "IN",
+        "platform_policy_state": "YOUTUBE"
+      },
+      "expected": {
+        "decision": "BLOCK",
+        "reason": "ENFORCEMENT_FAILURE_FAIL_CLOSED"
+      },
+      "guarantees": [
+        "Zero crash",
+        "Zero nonsense output",
+        "Fail-closed behavior"
+      ]
+    },
+    {
+      "name": "conflicting_confidence",
+      "input": {
+        "text": "test",
+        "meta": {
+          "emotional_output": { "dependency_score": 0.9 },
+          "risk_flags": ["HIGH_RISK", "EMOTIONAL_MANIPULATION"]
+        },
+        "age_state": "ALLOWED",
+        "region_state": "IN",
+        "platform_policy_state": "YOUTUBE"
+      },
+      "expected": {
+        "decision": "BLOCK",
+        "reason": "DETERMINISTIC_ENFORCEMENT_APPLIED"
+      },
+      "guarantees": [
+        "Priority resolution favors BLOCK",
+        "Deterministic outcome",
+        "Graceful output"
+      ]
+    },
+    {
+      "name": "corrupt_payload",
+      "input": {
+        "text": "test",
+        "meta": {
+          "emotional_output": null,
+          "risk_flags": null
+        },
+        "age_state": "ALLOWED",
+        "region_state": "IN",
+        "platform_policy_state": "YOUTUBE"
+      },
+      "expected": {
+        "decision": "BLOCK",
+        "reason": "ENFORCEMENT_FAILURE_FAIL_CLOSED"
+      },
+      "guarantees": [
+        "Zero crash",
+        "Zero nonsense output",
+        "Fail-closed behavior"
+      ]
+    },
+    {
+      "name": "broken_upstream",
+      "input": {
+        "text": "test",
+        "meta": {
+          "emotional_output": { "tone": "neutral", "dependency_score": 0.0 },
+          "risk_flags": []
+        },
+        "age_state": "ALLOWED",
+        "region_state": "IN",
+        "platform_policy_state": "YOUTUBE"
+      },
+      "expected": {
+        "decision": "BLOCK",
+        "reason": "ENFORCEMENT_FAILURE_FAIL_CLOSED"
+      },
+      "guarantees": [
+        "Gateway catches upstream errors",
+        "Zero crash",
+        "Graceful output"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,48 @@
+{
+  "version": "1.0.0",
+  "last_updated": "2026-01-05T10:22:53.716718",
+  "categories": {
+    "region_platform_conflict": {
+      "total_cases": 5,
+      "passed_cases": 0,
+      "failed_cases": 5,
+      "test_ids": [
+        "REG-020",
+        "REG-021",
+        "REG-022",
+        "REG-023",
+        "REG-024"
+      ]
+    },
+    "youth_risk_behavior": {
+      "total_cases": 6,
+      "passed_cases": 3,
+      "failed_cases": 3,
+      "test_ids": [
+        "YTH-025",
+        "YTH-026",
+        "YTH-027",
+        "YTH-028",
+        "YTH-029",
+        "YTH-030"
+      ]
+    },
+    "boundary_testing": {
+      "total_cases": 5,
+      "passed_cases": 0,
+      "failed_cases": 5,
+      "test_ids": [
+        "BND-048",
+        "BND-049",
+        "BND-050",
+        "BND-051",
+        "BND-052"
+      ]
+    }
+  },
+  "statistics": {
+    "total_edge_cases": 16,
+    "covered_edge_cases": 3,
+    "coverage_percentage": 18.75
+  }
+}

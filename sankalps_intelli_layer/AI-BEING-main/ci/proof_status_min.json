@@ -1,0 +1,18 @@
+{
+    "nilesh":  {
+                   "exitCode":  0,
+                   "failed":  0,
+                   "warnings":  48,
+                   "success":  true,
+                   "passed":  19
+               },
+    "status":  "READY",
+    "raj":  {
+                "exitCode":  0,
+                "failed":  0,
+                "warnings":  0,
+                "success":  true,
+                "passed":  89
+            },
+    "generated_at":  "2026-01-08T11:58:49.0101662+05:30"
+}

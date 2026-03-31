@@ -1,0 +1,62 @@
+{
+    "generated_at":  "2026-01-08T13:03:49.6355860+05:30",
+    "status":  "READY",
+    "suites":  {
+                   "Nilesh":  {
+                                  "nilesh":  {
+                                                 "exitCode":  0,
+                                                 "failed":  0,
+                                                 "warnings":  54,
+                                                 "success":  true,
+                                                 "passed":  19
+                                             },
+                                  "status":  "READY",
+                                  "raj":  null
+                              },
+                   "Raj":  {
+                               "nilesh":  null,
+                               "status":  "READY",
+                               "raj":  {
+                                           "exitCode":  0,
+                                           "failed":  0,
+                                           "warnings":  0,
+                                           "success":  true,
+                                           "passed":  89
+                                       }
+                           },
+                   "Quick":  {
+                                 "nilesh":  {
+                                                "exitCode":  0,
+                                                "failed":  0,
+                                                "warnings":  54,
+                                                "success":  true,
+                                                "passed":  19
+                                            },
+                                 "status":  "READY",
+                                 "raj":  {
+                                             "exitCode":  0,
+                                             "failed":  0,
+                                             "warnings":  0,
+                                             "success":  true,
+                                             "passed":  89
+                                         }
+                             },
+                   "All":  {
+                               "nilesh":  {
+                                              "exitCode":  0,
+                                              "failed":  0,
+                                              "warnings":  54,
+                                              "success":  true,
+                                              "passed":  19
+                                          },
+                               "status":  "READY",
+                               "raj":  {
+                                           "exitCode":  0,
+                                           "failed":  0,
+                                           "warnings":  0,
+                                           "success":  true,
+                                           "passed":  89
+                                       }
+                           }
+               }
+}

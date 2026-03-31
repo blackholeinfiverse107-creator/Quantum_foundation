@@ -59,7 +59,7 @@ class GlobalInvariantReport:
         return self.global_consensus and self.all_local_passed and not self.system_should_halt
 
     def summary(self) -> str:
-        status = "PASS ✓" if self.clean else "HALT ✗"
+        status = "PASS [OK]" if self.clean else "HALT [X]"
         parts = []
         if not self.global_consensus:
             parts.append(f"consensus_fail={self.diverged_nodes}")

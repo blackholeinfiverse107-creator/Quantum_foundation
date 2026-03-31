@@ -1,0 +1,1 @@
+# Schema Downgrade & Version Attack Report\n\n## Execution Log\n\n```text\n=== Schema Downgrade Attack ===\nPayload: Submitting a dictionary instead of a formal ProposalMessage, mimicking an older schema.\n[+] SYSTEM SECURE: Caught exception -> AttributeError: 'dict' object has no attribute 'proposal_id'\n\n```\n

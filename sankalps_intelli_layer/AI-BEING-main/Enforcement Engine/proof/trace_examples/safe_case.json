@@ -1,0 +1,48 @@
+{
+  "trace_id": "TRACE_SAFE_001",
+  "timestamp": "2026-01-06T10:15:00Z",
+  "input": {
+    "intent": "Explain the legal process for contract termination",
+    "emotional_output": {
+      "tone": "neutral",
+      "dependency_score": 0.08
+    },
+    "age_gate_status": "ALLOWED",
+    "region_policy": "IN",
+    "platform_policy": "YOUTUBE",
+    "karma_score": 0.42,
+    "risk_flags": []
+  },
+  "evaluator_stack": [
+    {
+      "evaluator": "age_compliance",
+      "decision": "EXECUTE",
+      "reason": "AGE_OK",
+      "confidence": 1.0,
+      "escalation": false
+    },
+    {
+      "evaluator": "safety_risk",
+      "decision": "EXECUTE",
+      "reason": "NO_SAFETY_RISK",
+      "confidence": 0.98,
+      "escalation": false
+    },
+    {
+      "evaluator": "dependency_tone",
+      "decision": "EXECUTE",
+      "reason": "DEPENDENCY_BELOW_THRESHOLD",
+      "confidence": 0.92,
+      "escalation": false
+    }
+  ],
+  "final_decision": "EXECUTE",
+  "why": "No safety, dependency, age, or platform risks detected",
+  "determinism_assertion": "Same input will always EXECUTE",
+  "trace_chain": [
+    "input_received",
+    "evaluators_executed",
+    "priority_resolution",
+    "decision_emitted"
+  ]
+}

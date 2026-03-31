@@ -1,0 +1,7 @@
+{
+  "scenario": "REWRITE - platform policy",
+  "arl_decision": "REWRITE",
+  "rewrite_class": "PLATFORM_SAFE_REWRITE",
+  "note": "Thanks for your request. I’ve adjusted the phrasing to keep things supportive and appropriate.",
+  "sanitized_example": "Subscribe now."
+}

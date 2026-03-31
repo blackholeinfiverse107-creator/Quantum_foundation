@@ -1,0 +1,7 @@
+{
+  "scenario": "REWRITE - emotional dependency",
+  "arl_decision": "REWRITE",
+  "rewrite_class": "REDUCE_EMOTIONAL_DEPENDENCY",
+  "note": "Thanks for your request. I’ve adjusted the phrasing to keep things supportive and appropriate.",
+  "sanitized_example": "We appreciate you and encourage autonomy."
+}

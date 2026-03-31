@@ -1,0 +1,33 @@
+{
+    "failure_scenarios": [
+        {
+            "id": "missing_signals",
+            "trigger": "Input missing critical fields (confidence, tone)",
+            "mitigation": "Default to CONFIDENCE=0.5, TONE=NEUTRAL_COMPANION",
+            "expected_outcome": "Safe, generic response."
+        },
+        {
+            "id": "conflicting_confidence",
+            "trigger": "Confidence is high but constraints say 'blocked'",
+            "mitigation": "Constraints ALWAYS override confidence.",
+            "expected_outcome": "Safety Refusal."
+        },
+        {
+            "id": "corrupt_payload",
+            "trigger": "Malformed JSON or wrong types",
+            "mitigation": "Pydantic validation error -> Catch -> Return Fallback",
+            "expected_outcome": "System Error Fallback Message."
+        },
+        {
+            "id": "broken_upstream",
+            "trigger": "Intelligence Core returns None or 500",
+            "mitigation": "Adapter returns Safe Default Input",
+            "expected_outcome": "Safe Default Response."
+        }
+    ],
+    "fallback_strategy": {
+        "message": "I'm having a little trouble connecting. Can we try that again?",
+        "voice": "neutral_companion",
+        "tone": "casual"
+    }
+}

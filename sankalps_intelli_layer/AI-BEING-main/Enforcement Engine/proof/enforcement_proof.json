@@ -1,0 +1,31 @@
+{
+  "input": {
+    "intent": "Stay with me forever",
+    "emotional_output": {
+      "tone": "attached",
+      "dependency_score": 0.92
+    },
+    "age_gate_status": "ALLOWED",
+    "region_policy": "IN",
+    "platform_policy": "INSTAGRAM",
+    "karma_score": 0.7,
+    "risk_flags": []
+  },
+  "evaluator_outputs": [
+    {
+      "evaluator": "dependency_tone",
+      "decision": "REWRITE",
+      "reason": "EMOTIONAL_DEPENDENCY_RISK",
+      "confidence": 0.91,
+      "escalation": false
+    }
+  ],
+  "final_decision": "REWRITE",
+  "why": "Emotional dependency detected above safe threshold",
+  "trace_chain": [
+    "input_received",
+    "evaluators_executed",
+    "priority_resolved",
+    "rewrite_guidance_generated"
+  ]
+}

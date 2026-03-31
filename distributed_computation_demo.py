@@ -171,7 +171,7 @@ def run_demo():
     inv_b = checker.run_full_check()
     print_invariant_report(inv_b)
     assert inv_b.system_should_halt, "Expected halt signal during divergence"
-    log("  ✓ Divergence correctly detected (system_should_halt=True)")
+    log("  [OK] Divergence correctly detected (system_should_halt=True)")
 
     # -----------------------------------------------------------------------
     section("PHASE C — Reconciliation")
@@ -217,7 +217,7 @@ def run_demo():
 
     unique = set(all_hashes.values())
     assert len(unique) == 1, f"Hash mismatch! {all_hashes}"
-    log(f"\n  ✓ All {len(all_hashes)} nodes share the same state hash.")
+    log(f"\n  [OK] All {len(all_hashes)} nodes share the same state hash.")
 
     # Replay hash
     replay_hash = hash_event_log(hub)
@@ -261,7 +261,7 @@ def generate_report(result: dict):
         "",
         f"**Date:** 2026-03-23  ",
         f"**System:** Quantum Foundation — Phase 7 Full Simulation  ",
-        f"**Status:** {'PASS ✓' if result['inv_final_clean'] and result['consensus_final'] else 'FAIL ✗'}",
+        f"**Status:** {'PASS [OK]' if result['inv_final_clean'] and result['consensus_final'] else 'FAIL [X]'}",
         "",
         "---",
         "",
@@ -303,7 +303,7 @@ def generate_report(result: dict):
         "|-------|----------|----------|----------------|",
         "| B | Node_B delayed (events 4 held) | Yes | No (detection only) |",
         "| B | Node_C excluded from event 5 | Yes | No (detection only) |",
-        "| B | Global invariant check | ✗ Partial/diverged | Flagged (halt signal emitted) |",
+        "| B | Global invariant check | [X] Partial/diverged | Flagged (halt signal emitted) |",
         "",
         "---",
         "",
@@ -329,10 +329,10 @@ def generate_report(result: dict):
         "",
         "| Checkpoint | Result |",
         "|------------|--------|",
-        "| After Phase A (normal ops) | PASS ✓ |",
-        "| During Phase B (divergence) | HALT signal emitted ✓ |",
-        "| After Phase C (reconciliation) | PASS ✓ |",
-        "| Final SYNC + full check | PASS ✓ |",
+        "| After Phase A (normal ops) | PASS [OK] |",
+        "| During Phase B (divergence) | HALT signal emitted [OK] |",
+        "| After Phase C (reconciliation) | PASS [OK] |",
+        "| Final SYNC + full check | PASS [OK] |",
         "",
         "All Cycle 1–8 invariants were enforced locally per node via `FullStackHarness.verify_all_invariants()`.  ",
         "Global consensus was enforced by `DistributedInvariantChecker`.",

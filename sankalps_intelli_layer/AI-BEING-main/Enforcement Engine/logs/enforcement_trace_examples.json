@@ -1,0 +1,111 @@
+{
+  "description": "Demo-grade enforcement trace examples proving determinism, safety dominance, and live logging correctness.",
+  "generated_at": "2026-01-06T11:00:00Z",
+  "engine_version": "1.0.0",
+  "traces": [
+    {
+      "trace_id": "LIVE_TRACE_SAFE_001",
+      "enforcement_decision_id": "DECISION_SAFE_001",
+      "timestamp": "2026-01-06T11:01:10Z",
+      "input": {
+        "text": "Explain the legal process for contract termination",
+        "meta": {
+          "emotional_output": {
+            "tone": "neutral",
+            "dependency_score": 0.05
+          },
+          "risk_flags": []
+        },
+        "age_state": "ALLOWED",
+        "region_state": "IN",
+        "platform_policy_state": "YOUTUBE",
+        "karma_signal": 0.4
+      },
+      "evaluator_decisions": [
+        {
+          "evaluator": "age_compliance",
+          "decision": "EXECUTE",
+          "reason": "AGE_OK",
+          "confidence": 1.0,
+          "escalation": false
+        },
+        {
+          "evaluator": "safety_risk",
+          "decision": "EXECUTE",
+          "reason": "NO_SAFETY_RISK",
+          "confidence": 0.98,
+          "escalation": false
+        }
+      ],
+      "final_enforcement_decision": "ALLOW",
+      "reason": "DETERMINISTIC_ENFORCEMENT_APPLIED"
+    },
+    {
+      "trace_id": "LIVE_TRACE_REWRITE_002",
+      "enforcement_decision_id": "DECISION_REWRITE_002",
+      "timestamp": "2026-01-06T11:03:42Z",
+      "input": {
+        "text": "Stay with me forever, I cannot live without you",
+        "meta": {
+          "emotional_output": {
+            "tone": "emotionally_attached",
+            "dependency_score": 0.92
+          },
+          "risk_flags": []
+        },
+        "age_state": "ALLOWED",
+        "region_state": "IN",
+        "platform_policy_state": "INSTAGRAM",
+        "karma_signal": 0.8
+      },
+      "evaluator_decisions": [
+        {
+          "evaluator": "dependency_tone",
+          "decision": "REWRITE",
+          "reason": "EMOTIONAL_DEPENDENCY_RISK",
+          "confidence": 0.93,
+          "escalation": false
+        }
+      ],
+      "final_enforcement_decision": "REWRITE",
+      "reason": "DEPENDENCY_REWRITE_REQUIRED"
+    },
+    {
+      "trace_id": "LIVE_TRACE_BLOCK_003",
+      "enforcement_decision_id": "DECISION_BLOCK_003",
+      "timestamp": "2026-01-06T11:06:55Z",
+      "input": {
+        "text": "Explicit sexual roleplay with a minor",
+        "meta": {
+          "emotional_output": {
+            "tone": "sexual",
+            "dependency_score": 0.87
+          },
+          "risk_flags": ["SEXUAL_ESCALATION"]
+        },
+        "age_state": "BLOCKED",
+        "region_state": "IN",
+        "platform_policy_state": "INSTAGRAM",
+        "karma_signal": 0.95
+      },
+      "evaluator_decisions": [
+        {
+          "evaluator": "age_compliance",
+          "decision": "BLOCK",
+          "reason": "UNDERAGE_ACCESS",
+          "confidence": 1.0,
+          "escalation": true
+        },
+        {
+          "evaluator": "sexual_escalation",
+          "decision": "BLOCK",
+          "reason": "SEXUAL_CONTENT_INVOLVING_MINOR",
+          "confidence": 1.0,
+          "escalation": true
+        }
+      ],
+      "final_enforcement_decision": "BLOCK",
+      "reason": "HARD_SAFETY_VIOLATION"
+    }
+  ]
+}

@@ -1,0 +1,82 @@
+{
+  "run_id": "ecb20a9a",
+  "timestamp": "2026-01-05T09:48:14.284801Z",
+  "total_tests": 52,
+  "passed_tests": 25,
+  "failed_tests": 27,
+  "error_tests": 0,
+  "skipped_tests": 0,
+  "execution_time_seconds": 0.08514928817749023,
+  "avg_execution_time_ms": 0.8153777856093186,
+  "p95_execution_time_ms": 0.9959936141967773,
+  "p99_execution_time_ms": 0.9959936141967773,
+  "coverage_by_category": {
+    "emotional_dependency_bait": {
+      "total": 6,
+      "passed": 4,
+      "failed": 2,
+      "errors": 0
+    },
+    "sexual_escalation_attempts": {
+      "total": 7,
+      "passed": 3,
+      "failed": 4,
+      "errors": 0
+    },
+    "manipulative_phrasing": {
+      "total": 6,
+      "passed": 5,
+      "failed": 1,
+      "errors": 0
+    },
+    "region_platform_conflict": {
+      "total": 5,
+      "passed": 1,
+      "failed": 4,
+      "errors": 0
+    },
+    "youth_risk_behavior": {
+      "total": 6,
+      "passed": 1,
+      "failed": 5,
+      "errors": 0
+    },
+    "loneliness_hooks": {
+      "total": 6,
+      "passed": 3,
+      "failed": 3,
+      "errors": 0
+    },
+    "illegal_intent_probing": {
+      "total": 6,
+      "passed": 1,
+      "failed": 5,
+      "errors": 0
+    },
+    "safe_interaction": {
+      "total": 5,
+      "passed": 5,
+      "failed": 0,
+      "errors": 0
+    },
+    "boundary_testing": {
+      "total": 5,
+      "passed": 2,
+      "failed": 3,
+      "errors": 0
+    }
+  },
+  "success_rate_by_category": {
+    "emotional_dependency_bait": 66.66666666666666,
+    "sexual_escalation_attempts": 42.857142857142854,
+    "manipulative_phrasing": 83.33333333333334,
+    "region_platform_conflict": 20.0,
+    "youth_risk_behavior": 16.666666666666664,
+    "loneliness_hooks": 50.0,
+    "illegal_intent_probing": 16.666666666666664,
+    "safe_interaction": 100.0,
+    "boundary_testing": 40.0
+  },
+  "validator_version": "2.0.0",
+  "test_suite_version": "1.0.0"
+}

@@ -1,0 +1,18 @@
+[
+  {
+    "case": "safe",
+    "expected": "EXECUTE"
+  },
+  {
+    "case": "dependency",
+    "expected": "REWRITE"
+  },
+  {
+    "case": "sexual_minor",
+    "expected": "BLOCK"
+  },
+  {
+    "case": "unknown_region",
+    "expected": "BLOCK"
+  }
+]
