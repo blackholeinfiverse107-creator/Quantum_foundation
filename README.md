@@ -118,3 +118,4 @@ Observation ──▶ SovereignStateEngine ──▶ StateDelta
 | 1 | State evolves under observations | `SovereignStateEngine` |
 | 2 | State is measured, information is declared lost | `CollapseEngine` |
 | 3 | All events are causally ordered and sealed | `CausalTimeline` |
+-=-=-=-
