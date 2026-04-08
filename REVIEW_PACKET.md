@@ -1,45 +1,25 @@
 # REVIEW_PACKET.md
 
-## 0. MARINE DIGITAL TWIN INTEGRATION (Task 1)
-**New Entry Point (Execution Interface):**
+## 0. DOMAIN AGNOSTIC ENGINE OVERHAUL
+**The Engine Core**
+The deterministic system has been purged of its domain-specific constraints (e.g. quantum matrices, marine corrosion).
+It now acts as a pure, universal sequence validation layer defined in `engine_core.md`. It accepts any generic `ExecutionEvent` blind and delegates payload transitions to external adapters.
+
+**Interface & Integrations**
+Path: `interface_contract.md`, `integration_contract.md`, `adapter_spec.md`
+What they do: Strict contracts proving that Dhiraj's Simulation components convert into standard `ExecutionEvent` dictionaries, are safely processed by the agnostic engine, and pushed to the `marine_adapter.py`.
+
+**Execution Interface (REST API)**
 Path: `execution_interface.py`
-What it does: An external FastAPI interface bridging real-world simulation inputs with the sealed deterministic cycle engine.
-How to use: `uvicorn execution_interface:app --host 0.0.0.0 --port 8000`
+What it does: An external FastAPI interface bridging real-world simulation inputs with the sealed deterministic engine via the new generic `execute_event` API endpoint.
 
 **Stress Test & Metrics Generator:**
 Path: `stress_simulation.py`
-What it does: Blasts the system with concurrent simulated sensor outputs to verify buffer handling, deterministic ordering, and hash consensus under load. Generates `system_metrics.md`.
+What it does: Blasts the system with concurrent simulated sensor outputs (utilizing the new `adapters/marine/marine_adapter.py`). Verified buffer handling and out-of-order divergence tolerance, generating `system_metrics.md`.
 
-**Real Execution Flow (Marine Data):**
-1. Simulation layer emits physical updates (e.g. `corrosion_rate=0.05`).
-2. API formats `MultiZoneUpdate` payload.
-3. `state_transition_mapper` translates payload into a Hub `ProposalMessage(step_type="MARINE_UPDATE")`.
-4. Hub sequences the event deterministically across distributed nodes.
-5. Nodes strictly apply transitions to `ZoneState` models within `MarineStateEngine`.
-6. Node hashes bundle quantum state + marine physical state for total network consensus.
-
-**Example Input/Output JSON (Marine API):**
-*Input (POST `/simulate`):*
-```json
-{
-  "origin": "Coastal_Sensor_Array_Alpha",
-  "zones": {
-    "zone_2": {
-      "corrosion_rate": 0.005,
-      "barnacle_density": 0.12
-    }
-  }
-}
-```
-*Output (Response):*
-```json
-{
-  "status": "applied",
-  "causal_id": 412,
-  "nodes_agreed": 3,
-  "execution_complete": true
-}
-```
+**System Placement Analysis:**
+Path: `system_placement.md`
+What it does: Evaluates the tradeoff positioning the Engine in KESHAV vs BHIV Core vs Sidecar middleware for the system architecture roadmap.
 
 ---## 1. ENTRY POINT
 **System Entry (Cycle 9 — Distributed Computation):**

@@ -32,7 +32,7 @@ from computation_protocol import (
     SyncReport,
     ExecutionReceipt
 )
-from distributed_state_node import NetworkEvent
+from tests_mock_adapter import MockAdapter
 
 
 # ---------------------------------------------------------------------------
@@ -58,27 +58,14 @@ class ScenarioDivergenceResult:
 # ---------------------------------------------------------------------------
 
 def _build_nodes_and_hub(halt_on_divergence=False):
-    """Create 3 fresh ProtocolNodes with H and X operators, registered to a Hub."""
-    initial_amps = {"0": complex(1.0, 0.0), "1": complex(0.0, 0.0)}
-    inv_sq2 = 1.0 / math.sqrt(2)
-    h_matrix = {
-        ("0", "0"): inv_sq2, ("0", "1"): inv_sq2,
-        ("1", "0"): inv_sq2, ("1", "1"): -inv_sq2
-    }
-    x_matrix = {
-        ("0", "0"): 0.0, ("0", "1"): 1.0,
-        ("1", "0"): 1.0, ("1", "1"): 0.0
-    }
-
+    """Create 3 fresh ProtocolNodes with MockAdapters, registered to a Hub."""
     hub = ComputationProtocolHub(
         halt_on_rejection=True,
         halt_on_divergence=halt_on_divergence
     )
     nodes = {}
     for name in ["Node_A", "Node_B", "Node_C"]:
-        n = ProtocolNode(name, initial_amps)
-        n.harness.define_unitary_operation("H", h_matrix, "Hadamard")
-        n.harness.define_unitary_operation("X", x_matrix, "Pauli-X")
+        n = ProtocolNode(name, adapter=MockAdapter())
         hub.register_node(n)
         nodes[name] = n
 
@@ -99,12 +86,12 @@ def simulate_scenario_a_delayed_node() -> ScenarioDivergenceResult:
     hub, nodes = _build_nodes_and_hub(halt_on_divergence=False)
     node_a = nodes["Node_A"]
 
-    # Event 1: H — delivered to B and C immediately, held from A
-    p1 = nodes["Node_B"].propose_evolve("H")
+    # Event 1: add 5
+    p1 = nodes["Node_B"].propose_event("ADD", {"add": 5})
     hub.submit(p1, delay_nodes=["Node_A"])
 
-    # Event 2: X — same
-    p2 = nodes["Node_C"].propose_evolve("X")
+    # Event 2: add 10
+    p2 = nodes["Node_C"].propose_event("ADD", {"add": 10})
     hub.submit(p2, delay_nodes=["Node_A"])
 
     # Event 3: SYNC — only B and C participate
@@ -131,7 +118,7 @@ def simulate_scenario_a_delayed_node() -> ScenarioDivergenceResult:
         system_halted=hub.is_halted,
         halt_reason=hub.halt_reason,
         notes="Node A state is intact at causal_id=0 (initial). "
-              "Recovery: release held events → Node A catches up."
+              "Recovery: release held events -> Node A catches up."
     )
 
 
@@ -148,16 +135,16 @@ def simulate_scenario_b_missing_event() -> ScenarioDivergenceResult:
     hub, nodes = _build_nodes_and_hub(halt_on_divergence=False)
     node_b = nodes["Node_B"]
 
-    # Event 1: H — delivered to all
-    p1 = nodes["Node_A"].propose_evolve("H")
+    # Event 1: delivered to all
+    p1 = nodes["Node_A"].propose_event("ADD", {"add": 5})
     hub.submit(p1)
 
-    # Event 2: X — excluded from Node B (permanently missing)
-    p2 = nodes["Node_A"].propose_evolve("X")
+    # Event 2: excluded from Node B (permanently missing)
+    p2 = nodes["Node_A"].propose_event("ADD", {"add": 10})
     hub.submit(p2, exclude_nodes=["Node_B"])
 
-    # Event 3: H — delivered to all (Node B buffers it, missing causal_id=2)
-    p3 = nodes["Node_C"].propose_evolve("H")
+    # Event 3: delivered to all (Node B buffers it, missing causal_id=2)
+    p3 = nodes["Node_C"].propose_event("ADD", {"add": 15})
     hub.submit(p3)
 
     # SYNC step — Node B will report stale hash
@@ -183,7 +170,7 @@ def simulate_scenario_b_missing_event() -> ScenarioDivergenceResult:
         system_halted=hub.is_halted,
         halt_reason=hub.halt_reason,
         notes="Node B has causal_id=3 buffered, blocked on causal_id=2. "
-              "Recovery: Hub replays causal_id=2 to Node B → buffer flushes."
+              "Recovery: Hub replays causal_id=2 to Node B -> buffer flushes."
     )
 
 
@@ -200,17 +187,17 @@ def simulate_scenario_c_out_of_order() -> ScenarioDivergenceResult:
     hub, nodes = _build_nodes_and_hub(halt_on_divergence=False)
     node_c = nodes["Node_C"]
 
-    # Event 1: H — all nodes receive
-    p1 = nodes["Node_A"].propose_evolve("H")
+    # Event 1: all nodes receive
+    p1 = nodes["Node_A"].propose_event("ADD", {"add": 5})
     hub.submit(p1)
 
-    # Event 2: X — delayed to Node C (will arrive later)
-    p2 = nodes["Node_B"].propose_evolve("X")
+    # Event 2: delayed to Node C (will arrive later)
+    p2 = nodes["Node_B"].propose_event("ADD", {"add": 10})
     hub.submit(p2, delay_nodes=["Node_C"])
 
-    # Event 3: H — delivered to Node C before event 2 arrives (out-of-order)
-    p3 = nodes["Node_A"].propose_evolve("H")
-    hub.submit(p3)  # Node C receives this, but buffers it (causal_id=2 missing)
+    # Event 3: delivered to Node C before event 2 arrives (out-of-order)
+    p3 = nodes["Node_A"].propose_event("ADD", {"add": 15})
+    hub.submit(p3)  # Node C receives this, but buffers it
 
     # Check status: C should be partial
     c_partial_before = node_c.is_partial
@@ -299,4 +286,4 @@ if __name__ == "__main__":
         halted = " | HALTED" if r.system_halted else ""
         print(f"  Scenario {r.scenario_name}: {status}{halted}")
 
-    print("\n✓ divergence_simulation.py complete — all scenarios executed.")
+    print("\nOK divergence_simulation.py complete — all scenarios executed.")

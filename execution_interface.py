@@ -2,22 +2,21 @@ import sys
 import os
 import time
 import uuid
-import asyncioclick  # just to avoid missing dependency if they don't have it initialized, but let's assume fastapi is available
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import Dict, Any, List
 
 sys.path.insert(0, os.path.dirname(__file__))
-from computation_protocol import ComputationProtocolHub, ProposalMessage
-from marine_state_schema import ZoneState
-from state_transition_mapper import MarineProtocolNode, create_marine_update_proposal
+from computation_protocol import ComputationProtocolHub, ProposalMessage, ProtocolNode
 
-# 1. Global deterministic state initialization
-app = FastAPI(title="Marine Intelligence System Execution API")
+# We import the marine adapter to act as our execution layer for demonstration/staging.
+# In a true domain-agnostic setup, this adapter injection would be configuration-driven.
+from adapters.marine.marine_adapter import MarineStateEngine, ZoneState, create_marine_update_event
+
+app = FastAPI(title="BHIV Deterministic Execution Interface")
 hub = ComputationProtocolHub(halt_on_rejection=True, halt_on_divergence=True)
 
-# Register nodes across 3 logical geographical sectors
-_initial_amps = {"0": complex(1.0, 0.0), "1": complex(0.0, 0.0)}
+# 1. Initialize Distributed Nodes (Bootstrapped with Marine Adapter)
 _initial_zones = {
     "zone_1": ZoneState(0.1, 5.0, 0.0, 1.0, 0.05),
     "zone_2": ZoneState(0.2, 4.8, 1.2, 0.9, 0.08)
@@ -25,65 +24,44 @@ _initial_zones = {
 
 nodes = []
 for name in ["Sector_A", "Sector_B", "Sector_C"]:
-    n = MarineProtocolNode(name, _initial_amps, _initial_zones)
+    engine_adapter = MarineStateEngine(_initial_zones)
+    # The ProtocolNode now takes ANY generic adapter
+    n = ProtocolNode(name, adapter=engine_adapter)
     hub.register_node(n)
     nodes.append(n)
 
-# 2. Pydantic Schemas for the API
-class ZoneUpdatePayload(BaseModel):
-    corrosion_rate: float = 0.0
-    coating_thickness: float = 0.0
-    barnacle_density: float = 0.0
-    oxygen_level: float = 0.0
-    surface_roughness: float = 0.0
-
-class MultiZoneUpdate(BaseModel):
+# 2. Pydantic Schemas for Generic Execution API
+class ExecuteRequest(BaseModel):
+    event_type: str
     origin: str = "ExternalSimulationNode"
-    zones: Dict[str, ZoneUpdatePayload]
+    payload: Dict[str, Any]
 
 # 3. Routes
-@app.post("/simulate")
-def submit_simulation_update(payload: MultiZoneUpdate):
+@app.post("/execute")
+def execute_event(req: ExecuteRequest):
     """
-    Accepts simulation output (e.g. from Dhiraj's Layer) and pushes it into 
-    the deterministic timeline of the Quantum protocol hub.
+    Accepts arbitrary structured events and applies them strictly across the distributed sequence.
     """
     if hub.is_halted:
         raise HTTPException(status_code=500, detail=f"Hub is halted: {hub.halt_reason}")
 
-    # Convert to formal dict for the engine payload
-    zone_dict = {
-        z_id: z_data.dict(exclude_unset=True) 
-        for z_id, z_data in payload.zones.items()
-    }
-
-    # Transform to Proposal
-    prop = create_marine_update_proposal(payload.origin, zone_dict)
+    # Generate the proposal to insert into the sequenced protocol
+    # In a real environment, the adapter might pre-process `req.payload` depending on event_type.
+    prop = ProposalMessage.create(req.origin, req.event_type, req.payload)
     
-    # Sequence and Commit Event
+    # 4. Engine executes and enforces causality
     receipt = hub.submit(prop)
     
     if receipt.any_rejected:
-        raise HTTPException(status_code=400, detail="Update rejected by one or more deterministic nodes.")
+        # Halt or feedback immediately
+        raise HTTPException(status_code=400, detail="Update rejected by one or more covariant nodes. Divergence prevented.")
         
     return {
         "status": "applied",
         "causal_id": receipt.sequenced_event.causal_id,
-        "nodes_agreed": len(receipt.acks),
-        "execution_complete": receipt.execution_complete
+        "state_hash": nodes[0].get_state_hash(),
+        "consensus": True if hub.check_full_consensus()["consensus"] else False
     }
-
-@app.get("/state/{zone_id}")
-def get_zone_state(zone_id: str):
-    """
-    Returns the physical deterministic state of the zone according to Node 0 (Sector_A).
-    In a fully synchronized system, any node holds the valid state.
-    """
-    marine_engine = nodes[0].marine_engine
-    zone = marine_engine.get_zone(zone_id)
-    if not zone:
-         raise HTTPException(status_code=404, detail="Zone not found.")
-    return zone.to_dict()
 
 @app.get("/metrics")
 def get_hub_metrics():
@@ -103,5 +81,4 @@ def get_hub_metrics():
 
 if __name__ == "__main__":
     import uvicorn
-    # Optional execution entry
     uvicorn.run(app, host="0.0.0.0", port=8000)

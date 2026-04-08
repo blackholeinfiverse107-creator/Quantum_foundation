@@ -25,7 +25,7 @@ from computation_protocol import (
     ProtocolNode,
     SequencedEvent
 )
-from distributed_state_node import NetworkEvent
+from distributed_state_node import ExecutionEvent
 
 
 # ---------------------------------------------------------------------------
@@ -174,9 +174,9 @@ class ReconciliationEngine:
         start_from = node.committed_causal_id + 1
         missing_sequenced = self.hub.get_event_slice(start_from, ref_cid)
 
-        # Convert SequencedEvents to NetworkEvents for the merge pipeline
+        # Convert SequencedEvents to ExecutionEvents for the merge pipeline
         missing_net = [
-            NetworkEvent(
+            ExecutionEvent(
                 causal_id=se.causal_id,
                 origin_node_id=se.origin_node,
                 event_type=se.step_type,
@@ -232,71 +232,5 @@ class ReconciliationEngine:
 
 
 # ---------------------------------------------------------------------------
-# Self-Test
+# Self-Test Extracted Out
 # ---------------------------------------------------------------------------
-
-if __name__ == "__main__":
-    import math
-    from computation_protocol import ProposalMessage
-
-    print("=== reconciliation_engine.py — Self Test ===\n")
-
-    initial_amps = {"0": complex(1.0, 0.0), "1": complex(0.0, 0.0)}
-    inv_sq2 = 1.0 / math.sqrt(2)
-    h_matrix = {
-        ("0", "0"): inv_sq2, ("0", "1"): inv_sq2,
-        ("1", "0"): inv_sq2, ("1", "1"): -inv_sq2
-    }
-    x_matrix = {
-        ("0", "0"): 0.0, ("0", "1"): 1.0,
-        ("1", "0"): 1.0, ("1", "1"): 0.0
-    }
-
-    hub = ComputationProtocolHub(halt_on_rejection=True, halt_on_divergence=False)
-    nodes = {}
-    for name in ["Node_A", "Node_B", "Node_C"]:
-        n = ProtocolNode(name, initial_amps)
-        n.harness.define_unitary_operation("H", h_matrix, "Hadamard")
-        n.harness.define_unitary_operation("X", x_matrix, "Pauli-X")
-        hub.register_node(n)
-        nodes[name] = n
-
-    # Simulate: Node B misses event 2
-    p1 = nodes["Node_A"].propose_evolve("H")
-    hub.submit(p1)                                  # all receive
-
-    p2 = nodes["Node_A"].propose_evolve("X")
-    hub.submit(p2, exclude_nodes=["Node_B"])        # Node B misses this
-
-    p3 = nodes["Node_A"].propose_evolve("H")
-    hub.submit(p3)                                  # Node B buffers (waiting for 2)
-
-    print("Before reconciliation:")
-    for n in nodes.values():
-        print(f"  {n.node_id}: committed_id={n.committed_causal_id}, "
-              f"partial={n.is_partial}, hash={n.get_state_hash()[:16]}...")
-
-    # Reconcile
-    engine = ReconciliationEngine(hub)
-    report = engine.reconcile_all()
-
-    print(f"\nReconciliation: {report.summary()}")
-    for r in report.reconciled_nodes:
-        print(f"\n  Node {r.node_id}:")
-        print(f"    Was lagging   : {r.was_lagging}")
-        print(f"    Events replayed: {r.events_replayed}")
-        print(f"    Events skipped : {r.events_already_committed}")
-        print(f"    Events buffered: {r.events_buffered}")
-        print(f"    Pre hash      : {r.pre_hash[:16]}...")
-        print(f"    Post hash     : {r.post_hash[:16]}...")
-        print(f"    Expected hash : {r.expected_hash[:16]}...")
-        print(f"    Converged     : {r.converged}")
-
-    print(f"\nFull consensus reached: {report.full_consensus_reached}")
-
-    # Hash verification
-    all_hashes = set(n.get_state_hash() for n in nodes.values())
-    assert len(all_hashes) == 1, f"Expected 1 unique hash, got {len(all_hashes)}: {all_hashes}"
-    assert report.full_consensus_reached, "Full consensus should be reached"
-
-    print("\n✓ reconciliation_engine.py — All self-tests passed.")

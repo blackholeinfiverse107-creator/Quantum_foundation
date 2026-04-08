@@ -15,12 +15,12 @@ It wraps the existing DistributedStateNode additively.
 import hashlib
 import time
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Any
 import sys
 import os
 
 sys.path.insert(0, os.path.dirname(__file__))
-from distributed_state_node import DistributedStateNode, NetworkEvent
+from distributed_state_node import DistributedStateNode, ExecutionEvent
 
 
 # ---------------------------------------------------------------------------
@@ -36,7 +36,7 @@ class StateSnapshot:
     node_id: str
     last_applied_causal_id: int
     state_hash: str
-    amplitude_dict: dict          # Frozen copy: {basis_label: complex}
+    domain_state_dict: dict       # Frozen copy of adapter state
     captured_at: float            # Monotonic timestamp (non-authoritative)
 
     def __eq__(self, other):
@@ -77,12 +77,12 @@ class PropagatingStateNode(DistributedStateNode):
       4. Tracking partial knowledge status
     """
 
-    def __init__(self, node_id: str, initial_amplitudes: Dict[str, complex]):
-        super().__init__(node_id, initial_amplitudes)
+    def __init__(self, node_id: str, adapter: 'Any' = None):
+        super().__init__(node_id, adapter)
         # Snapshot history keyed by causal_id
         self._snapshot_history: Dict[int, StateSnapshot] = {}
         # Track events that were rejected by invariants
-        self._rejected_events: List[Tuple[NetworkEvent, str]] = []
+        self._rejected_events: List[Tuple[ExecutionEvent, str]] = []
         # Partial knowledge flag — True if node is known to be missing events
         self._is_partial: bool = False
 
@@ -95,14 +95,12 @@ class PropagatingStateNode(DistributedStateNode):
         Export a read-only, causally-stamped snapshot of the current state.
         Safe to share with other nodes or the reconciliation engine.
         """
-        amp_dict = self.observe()
-        # Freeze amplitude dict into a plain hashable structure
-        frozen_amps = {k: (v.real, v.imag) for k, v in amp_dict.items()}
+        domain_dict = getattr(self.adapter, "to_dict", lambda: {})()
         snap = StateSnapshot(
             node_id=self.node_id,
             last_applied_causal_id=self.next_expected_causal_id - 1,
             state_hash=self.get_state_hash(),
-            amplitude_dict=frozen_amps,
+            domain_state_dict=domain_dict,
             captured_at=time.monotonic()
         )
         # Cache for diagnostic use
@@ -117,7 +115,7 @@ class PropagatingStateNode(DistributedStateNode):
     # Batch Merge (Catch-Up Protocol)
     # -----------------------------------------------------------------------
 
-    def merge_event_batch(self, events: List[NetworkEvent]) -> MergeResult:
+    def merge_event_batch(self, events: List[ExecutionEvent]) -> MergeResult:
         """
         Deterministically apply a batch of events in causal order.
 
@@ -255,17 +253,17 @@ class PropagatingHub:
     def __init__(self):
         self.nodes: List[PropagatingStateNode] = []
         self.global_causal_id: int = 1
-        self.event_log: List[NetworkEvent] = []
+        self.event_log: List[ExecutionEvent] = []
         self._delivery_mode: str = "IMMEDIATE"  # can switch to "SELECTIVE"
-        self._held_events: Dict[str, List[NetworkEvent]] = {}  # for simulated delays
+        self._held_events: Dict[str, List[ExecutionEvent]] = {}  # for simulated delays
 
     def register_node(self, node: PropagatingStateNode):
         self.nodes.append(node)
         self._held_events[node.node_id] = []
 
-    def broadcast(self, raw_event: NetworkEvent,
+    def broadcast(self, raw_event: ExecutionEvent,
                   exclude_nodes: Optional[List[str]] = None,
-                  delay_nodes: Optional[List[str]] = None) -> NetworkEvent:
+                  delay_nodes: Optional[List[str]] = None) -> ExecutionEvent:
         """
         Sequence and broadcast an event.
 
@@ -277,7 +275,7 @@ class PropagatingHub:
         Returns:
             The sequenced event (with assigned causal_id).
         """
-        sequenced = NetworkEvent(
+        sequenced = ExecutionEvent(
             causal_id=self.global_causal_id,
             origin_node_id=raw_event.origin_node_id,
             event_type=raw_event.event_type,
@@ -299,7 +297,7 @@ class PropagatingHub:
 
         return sequenced
 
-    def release_held_events(self, node_id: str) -> List[NetworkEvent]:
+    def release_held_events(self, node_id: str) -> List[ExecutionEvent]:
         """
         Release all held (delayed) events to a specific node.
         Simulates a delayed node finally receiving its events.
@@ -313,7 +311,7 @@ class PropagatingHub:
         return held
 
     def get_event_slice(self, from_causal_id: int,
-                        to_causal_id: Optional[int] = None) -> List[NetworkEvent]:
+                        to_causal_id: Optional[int] = None) -> List[ExecutionEvent]:
         """
         Return event log slice from from_causal_id (inclusive) to to_causal_id.
         Used by reconciliation engine to replay missed events.
@@ -363,80 +361,5 @@ class PropagatingHub:
 
 
 # ---------------------------------------------------------------------------
-# Self-Test
+# Self-Test Extracted out for domain-agnosticism.
 # ---------------------------------------------------------------------------
-
-if __name__ == "__main__":
-    import math
-
-    print("=== distributed_state_propagation.py — Self Test ===\n")
-
-    initial_amps = {"0": complex(1.0, 0.0), "1": complex(0.0, 0.0)}
-    inv_sq2 = 1.0 / math.sqrt(2)
-    h_matrix = {
-        ("0", "0"): inv_sq2, ("0", "1"): inv_sq2,
-        ("1", "0"): inv_sq2, ("1", "1"): -inv_sq2
-    }
-
-    hub = PropagatingHub()
-    node_a = PropagatingStateNode("Node_A", initial_amps)
-    node_b = PropagatingStateNode("Node_B", initial_amps)
-
-    for n in [node_a, node_b]:
-        n.harness.define_unitary_operation("H", h_matrix, "Hadamard")
-        hub.register_node(n)
-
-    # Normal broadcast
-    e1 = node_a.propose_evolution("H")
-    hub.broadcast(e1)
-
-    print(f"After H broadcast:")
-    for n in [node_a, node_b]:
-        s = n.get_stamped_hash()
-        print(f"  {s['node_id']}: causal_id={s['causal_id']} hash={s['state_hash'][:16]}...")
-
-    # Test snapshot export
-    snap_a = node_a.export_snapshot()
-    print(f"\nNode_A snapshot: causal_id={snap_a.last_applied_causal_id}, hash={snap_a.state_hash[:16]}...")
-
-    # Test consensus
-    consensus = hub.check_consensus()
-    print(f"\nConsensus: {consensus['consensus']}")
-    assert consensus["consensus"], "Consensus should hold after full broadcast"
-
-    # Test delayed delivery
-    node_c = PropagatingStateNode("Node_C", initial_amps)
-    node_c.harness.define_unitary_operation("H", h_matrix, "Hadamard")
-    hub.register_node(node_c)
-
-    # Broadcast event 2 — delay Node_C
-    e2 = node_a.propose_evolution("H")
-    hub.broadcast(e2, delay_nodes=["Node_C"])
-
-    print(f"\nAfter delayed broadcast (Node_C excluded):")
-    print(f"  Node_C is_partial: {node_c.is_partial}")
-    print(f"  Node_C pending: {node_c.pending_causal_ids}")
-
-    # Release the held event
-    hub.release_held_events("Node_C")
-    print(f"\nAfter release_held_events:")
-    print(f"  Node_C is_partial: {node_c.is_partial}")
-
-    # Final consensus
-    consensus2 = hub.check_consensus()
-    print(f"  Consensus (A, B vs C): Note C has only half events.")
-
-    # Test batch merge — give Node_C the missing events it needs
-    node_d = PropagatingStateNode("Node_D", initial_amps)
-    node_d.harness.define_unitary_operation("H", h_matrix, "Hadamard")
-
-    all_events = hub.get_event_slice(1, hub.global_causal_id - 1)
-    result = node_d.merge_event_batch(all_events)
-    print(f"\nBatch merge on Node_D:")
-    print(f"  Applied: {result.events_applied}")
-    print(f"  Skipped: {result.events_skipped}")
-    print(f"  Buffered: {result.events_buffered}")
-    print(f"  Success: {result.success}")
-    print(f"  Final hash: {result.final_state_hash[:16]}...")
-
-    print("\n✓ distributed_state_propagation.py — All self-tests passed.")

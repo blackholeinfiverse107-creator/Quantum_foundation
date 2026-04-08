@@ -24,11 +24,11 @@ All nodes converged to the same deterministic state hash after reconciliation.
 
 | Node | Final State Hash |
 |------|-----------------|
-| Node_A | `7198c2f349cbc320a8733fce22ba303e6d2518d6c3077ef8ec9280e87745e134` |
-| Node_B | `7198c2f349cbc320a8733fce22ba303e6d2518d6c3077ef8ec9280e87745e134` |
-| Node_C | `7198c2f349cbc320a8733fce22ba303e6d2518d6c3077ef8ec9280e87745e134` |
+| Node_A | `6f4b6612125fb3a0daecd2799dfd6c9c299424fd920f9b308110a2c1fbd8f443` |
+| Node_B | `6f4b6612125fb3a0daecd2799dfd6c9c299424fd920f9b308110a2c1fbd8f443` |
+| Node_C | `6f4b6612125fb3a0daecd2799dfd6c9c299424fd920f9b308110a2c1fbd8f443` |
 
-**Event Log Hash (replay proof):** `71b0ba28cfa4944c8b1f802b0687b6c1216c01649d90304f4c0dba897d24d51c`
+**Event Log Hash (replay proof):** `908b472a67fbd476a865a0affd9d4ce89b539cb189f97f568aa6b3febb722e6c`
 
 > This hash is the SHA-256 of the complete ordered event log.
 > Any replay from the same initial state + this event log produces
@@ -79,7 +79,7 @@ The system guarantees:
 1. **Same initial state + same event log → same final hash** (proven by hash equality above)
 2. **No event applied twice** (ReconciliationEngine skips already-committed causal_ids)
 3. **No state overwrite** (all changes via `FullStackHarness` transitions only)
-4. **Causal ordering** (NetworkEvent buffer holds events until predecessor is committed)
+4. **Causal ordering** (ExecutionEvent buffer holds events until predecessor is committed)
 5. **Hub is the sole sequencer** (single source of causal_id truth)
 
 ---
@@ -94,35 +94,35 @@ System: Quantum Foundation — Phase 7 Full Simulation
 ============================================================
   PHASE A — Normal Operations (All Nodes in Sync)
 ============================================================
-Op 1 [EVOLVE H] causal_id=1 — True
+Op 1 [ADD 5] causal_id=1 — True
 Op 2 [SYNC]     SYNC causal_id=2: CONSENSUS [OK] (all 3 nodes agree)
-Op 3 [MEASURE]  causal_id=3 — True
+Op 3 [ADD 10]  causal_id=3 — True
 
 Invariant check after Phase A:
   Result: [PASS [OK]] all checks passed
 
 [Phase A — Node Status]
-  Node_A: committed_id=3 partial=False pending=[] hash=f0794177f545c31f...
-  Node_B: committed_id=3 partial=False pending=[] hash=f0794177f545c31f...
-  Node_C: committed_id=3 partial=False pending=[] hash=f0794177f545c31f...
+  Node_A: committed_id=3 partial=False pending=[] hash=e629fa6598d73276...
+  Node_B: committed_id=3 partial=False pending=[] hash=e629fa6598d73276...
+  Node_C: committed_id=3 partial=False pending=[] hash=e629fa6598d73276...
 
 ============================================================
   PHASE B — Controlled Divergence
 ============================================================
-Op 4 [EVOLVE X] causal_id=4 — Node_B delayed
-Op 5 [EVOLVE H] causal_id=5 — Node_C excluded
-Op 6 [EVOLVE X] causal_id=6 — all receive
+Op 4 [ADD 1] causal_id=4 — Node_B delayed
+Op 5 [ADD 2] causal_id=5 — Node_C excluded
+Op 6 [ADD 3] causal_id=6 — all receive
 
 Divergence state:
 
 [Phase B — Divergence]
-  Node_A: committed_id=6 partial=False pending=[] hash=7198c2f349cbc320...
-  Node_B: committed_id=3 partial=True pending=[5, 6] hash=f0794177f545c31f...
-  Node_C: committed_id=4 partial=True pending=[6] hash=f0794177f545c31f...
+  Node_A: committed_id=6 partial=False pending=[] hash=6f4b6612125fb3a0...
+  Node_B: committed_id=3 partial=True pending=[5, 6] hash=e629fa6598d73276...
+  Node_C: committed_id=4 partial=True pending=[6] hash=b17ef6d19c7a5b1e...
 
   Is consensus broken?
   Consensus: False
-  Unique hashes: 2
+  Unique hashes: 3
   Partial nodes: ['Node_B', 'Node_C']
 
 Invariant check during divergence:
@@ -146,9 +146,9 @@ Reconciling Node_C (missing causal_id=5)...
 Post-reconciliation node status:
 
 [Phase C — After Reconciliation]
-  Node_A: committed_id=6 partial=False pending=[] hash=7198c2f349cbc320...
-  Node_B: committed_id=6 partial=False pending=[] hash=7198c2f349cbc320...
-  Node_C: committed_id=6 partial=False pending=[] hash=7198c2f349cbc320...
+  Node_A: committed_id=6 partial=False pending=[] hash=6f4b6612125fb3a0...
+  Node_B: committed_id=6 partial=False pending=[] hash=6f4b6612125fb3a0...
+  Node_C: committed_id=6 partial=False pending=[] hash=6f4b6612125fb3a0...
 
 ============================================================
   PHASE D — Final Invariant Enforcement + Consensus Proof
@@ -164,13 +164,13 @@ Final consensus:
   Unique hashes: 1
 
 Final state hashes:
-  Node_A: 7198c2f349cbc320a8733fce22ba303e6d2518d6c3077ef8ec9280e87745e134
-  Node_B: 7198c2f349cbc320a8733fce22ba303e6d2518d6c3077ef8ec9280e87745e134
-  Node_C: 7198c2f349cbc320a8733fce22ba303e6d2518d6c3077ef8ec9280e87745e134
+  Node_A: 6f4b6612125fb3a0daecd2799dfd6c9c299424fd920f9b308110a2c1fbd8f443
+  Node_B: 6f4b6612125fb3a0daecd2799dfd6c9c299424fd920f9b308110a2c1fbd8f443
+  Node_C: 6f4b6612125fb3a0daecd2799dfd6c9c299424fd920f9b308110a2c1fbd8f443
 
   [OK] All 3 nodes share the same state hash.
 
-Event log hash (replay proof): 71b0ba28cfa4944c8b1f802b0687b6c1216c01649d90304f4c0dba897d24d51c
+Event log hash (replay proof): 908b472a67fbd476a865a0affd9d4ce89b539cb189f97f568aa6b3febb722e6c
 Total events in log: 7
 
 ============================================================
@@ -180,8 +180,8 @@ Events processed : 7
 Nodes reconciled : 2
 Final consensus  : True
 Invariants clean : True
-Replay hash      : 71b0ba28cfa4944c8b1f802b0687b6c1...
-State hash (all) : 7198c2f349cbc320a8733fce22ba303e...
+Replay hash      : 908b472a67fbd476a865a0affd9d4ce8...
+State hash (all) : 6f4b6612125fb3a0daecd2799dfd6c9c...
 
 RESULT: PASS — Deterministic distributed computation protocol verified.
 ```

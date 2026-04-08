@@ -27,6 +27,7 @@ sys.path.insert(0, os.path.dirname(__file__))
 from computation_protocol import ComputationProtocolHub, ProtocolNode, ProposalMessage
 from reconciliation_engine import ReconciliationEngine, ReconciliationReport
 from distributed_invariant_check import DistributedInvariantChecker, GlobalInvariantReport
+from tests_mock_adapter import MockAdapter
 
 
 # ---------------------------------------------------------------------------
@@ -52,23 +53,10 @@ def section(title: str):
 # ---------------------------------------------------------------------------
 
 def setup_system():
-    initial_amps = {"0": complex(1.0, 0.0), "1": complex(0.0, 0.0)}
-    inv_sq2 = 1.0 / math.sqrt(2)
-    h_matrix = {
-        ("0", "0"): inv_sq2, ("0", "1"): inv_sq2,
-        ("1", "0"): inv_sq2, ("1", "1"): -inv_sq2
-    }
-    x_matrix = {
-        ("0", "0"): 0.0, ("0", "1"): 1.0,
-        ("1", "0"): 1.0, ("1", "1"): 0.0
-    }
-
     hub = ComputationProtocolHub(halt_on_rejection=True, halt_on_divergence=False)
     nodes = {}
     for name in ["Node_A", "Node_B", "Node_C"]:
-        n = ProtocolNode(name, initial_amps)
-        n.harness.define_unitary_operation("H", h_matrix, "Hadamard")
-        n.harness.define_unitary_operation("X", x_matrix, "Pauli-X")
+        n = ProtocolNode(name, adapter=MockAdapter())
         hub.register_node(n)
         nodes[name] = n
 
@@ -126,17 +114,17 @@ def run_demo():
 
     node_a, node_b, node_c = nodes["Node_A"], nodes["Node_B"], nodes["Node_C"]
 
-    # Operation 1: H gate from Node A
-    r1 = hub.submit(node_a.propose_evolve("H"))
-    log(f"Op 1 [EVOLVE H] causal_id={r1.sequenced_event.causal_id} — {r1.all_applied}")
+    # Operation 1: Add 5
+    r1 = hub.submit(node_a.propose_event("ADD", {"add": 5}))
+    log(f"Op 1 [ADD 5] causal_id={r1.sequenced_event.causal_id} — {r1.all_applied}")
 
     # Operation 2: SYNC
     r_sync1 = hub.submit(node_a.propose_sync())
     log(f"Op 2 [SYNC]     {r_sync1.sync_report.summary()}")
 
-    # Operation 3: Measurement from Node B (seed=42)
-    r3 = hub.submit(node_b.propose_measure("m1", 42))
-    log(f"Op 3 [MEASURE]  causal_id={r3.sequenced_event.causal_id} — {r3.all_applied}")
+    # Operation 3: Add 10 from Node B
+    r3 = hub.submit(node_b.propose_event("ADD", {"add": 10}))
+    log(f"Op 3 [ADD 10]  causal_id={r3.sequenced_event.causal_id} — {r3.all_applied}")
 
     # Invariant check after Phase A
     log("\nInvariant check after Phase A:")
@@ -149,17 +137,17 @@ def run_demo():
     section("PHASE B — Controlled Divergence")
     # -----------------------------------------------------------------------
 
-    # Op 4: X gate — delay Node B (it lags)
-    r4 = hub.submit(node_a.propose_evolve("X"), delay_nodes=["Node_B"])
-    log(f"Op 4 [EVOLVE X] causal_id={r4.sequenced_event.causal_id} — Node_B delayed")
+    # Op 4: add 1 — delay Node B (it lags)
+    r4 = hub.submit(node_a.propose_event("ADD", {"add": 1}), delay_nodes=["Node_B"])
+    log(f"Op 4 [ADD 1] causal_id={r4.sequenced_event.causal_id} — Node_B delayed")
 
-    # Op 5: H gate — Node C missing this event permanently
-    r5 = hub.submit(node_a.propose_evolve("H"), exclude_nodes=["Node_C"])
-    log(f"Op 5 [EVOLVE H] causal_id={r5.sequenced_event.causal_id} — Node_C excluded")
+    # Op 5: add 2 — Node C missing this event permanently
+    r5 = hub.submit(node_a.propose_event("ADD", {"add": 2}), exclude_nodes=["Node_C"])
+    log(f"Op 5 [ADD 2] causal_id={r5.sequenced_event.causal_id} — Node_C excluded")
 
-    # Op 6: H gate — all receive it (Node B buffers, Node C buffers)
-    r6 = hub.submit(node_a.propose_evolve("X"))
-    log(f"Op 6 [EVOLVE X] causal_id={r6.sequenced_event.causal_id} — all receive")
+    # Op 6: add 3 — all receive it (Node B buffers, Node C buffers)
+    r6 = hub.submit(node_a.propose_event("ADD", {"add": 3}))
+    log(f"Op 6 [ADD 3] causal_id={r6.sequenced_event.causal_id} — all receive")
 
     log("\nDivergence state:")
     print_node_status(hub, "Phase B — Divergence")
@@ -346,7 +334,7 @@ def generate_report(result: dict):
         "1. **Same initial state + same event log → same final hash** (proven by hash equality above)",
         "2. **No event applied twice** (ReconciliationEngine skips already-committed causal_ids)",
         "3. **No state overwrite** (all changes via `FullStackHarness` transitions only)",
-        "4. **Causal ordering** (NetworkEvent buffer holds events until predecessor is committed)",
+        "4. **Causal ordering** (ExecutionEvent buffer holds events until predecessor is committed)",
         "5. **Hub is the sole sequencer** (single source of causal_id truth)",
         "",
         "---",

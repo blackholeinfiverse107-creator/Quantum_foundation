@@ -6,9 +6,8 @@ import threading
 import concurrent.futures
 
 sys.path.insert(0, os.path.dirname(__file__))
-from computation_protocol import ComputationProtocolHub, ProposalMessage
-from marine_state_schema import ZoneState
-from state_transition_mapper import MarineProtocolNode, create_marine_update_proposal
+from computation_protocol import ComputationProtocolHub, ProposalMessage, ProtocolNode
+from adapters.marine.marine_adapter import ZoneState, MarineStateEngine
 
 # Metrics tracking
 metric_event_count = 0
@@ -19,7 +18,6 @@ metric_divergence_incidents = 0
 def stress_test_marine_simulation():
     print("=== Phase 6: Stress & Multi-Client Simulation ===")
     
-    initial_amps = {"0": complex(1.0, 0.0), "1": complex(0.0, 0.0)}
     initial_zones = {
         "zone_1": ZoneState(0.1, 5.0, 0.0, 1.0, 0.05),
         "zone_2": ZoneState(0.2, 4.8, 1.2, 0.9, 0.08),
@@ -31,7 +29,7 @@ def stress_test_marine_simulation():
     
     node_names = ["Coastal_Grid_1", "Coastal_Grid_2", "Offshore_Platform_Alpha", "Central_HQ"]
     for name in node_names:
-        n = MarineProtocolNode(name, initial_amps, initial_zones)
+        n = ProtocolNode(name, adapter=MarineStateEngine(initial_zones))
         hub.register_node(n)
         nodes.append(n)
         
@@ -55,7 +53,7 @@ def stress_test_marine_simulation():
                 }
             }
             
-            prop = create_marine_update_proposal(f"Sensor_{client_id}", payload)
+            prop = ProposalMessage.create(f"Sensor_{client_id}", "STATE_UPDATE", payload)
             
             # Simulated network jitter / latency arrival
             time.sleep(random.uniform(0.001, 0.005))

@@ -17,7 +17,7 @@ import time
 import uuid
 import hashlib
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Callable
+from typing import Dict, List, Optional, Callable, Any
 import sys
 import os
 
@@ -28,7 +28,7 @@ from distributed_state_propagation import (
     StateSnapshot,
     MergeResult
 )
-from distributed_state_node import NetworkEvent
+from distributed_state_node import ExecutionEvent
 
 
 # ---------------------------------------------------------------------------
@@ -48,22 +48,12 @@ class ProposalMessage:
     proposed_at: float       # Monotonic timestamp (advisory only)
 
     @staticmethod
-    def evolve(origin: str, rule_name: str) -> "ProposalMessage":
+    def create(origin: str, step_type: str, payload: dict) -> "ProposalMessage":
         return ProposalMessage(
             proposal_id=str(uuid.uuid4()),
             origin_node=origin,
-            step_type="EVOLVE",
-            payload={"rule_name": rule_name},
-            proposed_at=time.monotonic()
-        )
-
-    @staticmethod
-    def measure(origin: str, token_id: str, seed: int) -> "ProposalMessage":
-        return ProposalMessage(
-            proposal_id=str(uuid.uuid4()),
-            origin_node=origin,
-            step_type="MEASURE",
-            payload={"token_id": token_id, "seed": seed},
+            step_type=step_type,
+            payload=payload,
             proposed_at=time.monotonic()
         )
 
@@ -158,17 +148,13 @@ class ProtocolNode(PropagatingStateNode):
     Communicates with ComputationProtocolHub via ProposalMessage and AckMessage.
     """
 
-    def __init__(self, node_id: str, initial_amplitudes: Dict[str, complex]):
-        super().__init__(node_id, initial_amplitudes)
+    def __init__(self, node_id: str, adapter: 'Any' = None):
+        super().__init__(node_id, adapter)
         self._ack_log: List[AckMessage] = []
 
-    def propose_evolve(self, rule_name: str) -> ProposalMessage:
-        """Propose a unitary evolution step."""
-        return ProposalMessage.evolve(self.node_id, rule_name)
-
-    def propose_measure(self, token_id: str, seed: int) -> ProposalMessage:
-        """Propose a measurement collapse step."""
-        return ProposalMessage.measure(self.node_id, token_id, seed)
+    def propose_event(self, step_type: str, payload: dict) -> ProposalMessage:
+        """Propose a generic transition event."""
+        return ProposalMessage.create(self.node_id, step_type, payload)
 
     def propose_sync(self) -> ProposalMessage:
         """Propose a SYNC (consensus check) step."""
@@ -181,8 +167,8 @@ class ProtocolNode(PropagatingStateNode):
         """
         prev_expected = self.next_expected_causal_id
 
-        # Convert SequencedEvent to NetworkEvent for existing pipeline
-        net_event = NetworkEvent(
+        # Convert SequencedEvent to ExecutionEvent for existing pipeline
+        net_event = ExecutionEvent(
             causal_id=event.causal_id,
             origin_node_id=event.origin_node,
             event_type=event.step_type,
@@ -472,54 +458,5 @@ class ComputationProtocolHub:
 
 
 # ---------------------------------------------------------------------------
-# Self-Test
+# Self-Test extracted out for Domain Agnosticism
 # ---------------------------------------------------------------------------
-
-if __name__ == "__main__":
-    import math
-
-    print("=== computation_protocol.py — Self Test ===\n")
-
-    initial_amps = {"0": complex(1.0, 0.0), "1": complex(0.0, 0.0)}
-    inv_sq2 = 1.0 / math.sqrt(2)
-    h_matrix = {
-        ("0", "0"): inv_sq2, ("0", "1"): inv_sq2,
-        ("1", "0"): inv_sq2, ("1", "1"): -inv_sq2
-    }
-
-    hub = ComputationProtocolHub(halt_on_rejection=True, halt_on_divergence=False)
-
-    nodes = []
-    for name in ["Node_A", "Node_B", "Node_C"]:
-        n = ProtocolNode(name, initial_amps)
-        n.harness.define_unitary_operation("H", h_matrix, "Hadamard")
-        hub.register_node(n)
-        nodes.append(n)
-
-    node_a, node_b, node_c = nodes
-
-    # Submit H evolution from Node_A
-    p1 = node_a.propose_evolve("H")
-    r1 = hub.submit(p1)
-    print(f"Step 1 (EVOLVE H): causal_id={r1.sequenced_event.causal_id}, "
-          f"all_applied={r1.all_applied}")
-
-    # Submit SYNC to verify consensus
-    p2 = node_a.propose_sync()
-    r2 = hub.submit(p2)
-    print(f"Step 2 (SYNC):      {r2.sync_report.summary()}")
-
-    # Submit measurement from Node_B
-    p3 = node_b.propose_measure("m1", 42)
-    r3 = hub.submit(p3)
-    print(f"Step 3 (MEASURE):   causal_id={r3.sequenced_event.causal_id}, "
-          f"all_applied={r3.all_applied}")
-
-    # Verify all three nodes converge on same hash
-    consensus = hub.check_full_consensus()
-    print(f"\nFinal consensus: {consensus['consensus']}")
-    for nid, h in consensus['node_hashes'].items():
-        print(f"  {nid}: {h[:16]}...")
-
-    assert consensus["consensus"], "All nodes should agree!"
-    print("\n✓ computation_protocol.py — All self-tests passed.")
