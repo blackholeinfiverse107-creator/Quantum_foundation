@@ -19,9 +19,9 @@ def stress_test_marine_simulation():
     print("=== Phase 6: Stress & Multi-Client Simulation ===")
     
     initial_zones = {
-        "zone_1": ZoneState(0.1, 5.0, 0.0, 1.0, 0.05),
-        "zone_2": ZoneState(0.2, 4.8, 1.2, 0.9, 0.08),
-        "zone_3": ZoneState(0.01, 6.0, 0.0, 1.0, 0.01)
+        "BOW_PORT": ZoneState(0.12, 1.05, 35.0, 0.05, 0.02),
+        "MID_KEEL": ZoneState(0.24, 0.90, 42.5, 0.15, 0.10),
+        "AFT_STERN": ZoneState(0.18, 0.95, 38.0, 0.20, 0.12)
     }
 
     hub = ComputationProtocolHub(halt_on_rejection=True, halt_on_divergence=True)
@@ -45,12 +45,21 @@ def stress_test_marine_simulation():
     def simulate_sensor_burst(client_id: int, updates: int):
         global metric_event_count, metric_latencies
         for i in range(updates):
-            # Generate random realistic transitions
+            # Generate random realistic transitions matching Dhiraj's formal schema
             payload = {
-                f"zone_{random.choice([1, 2, 3])}": {
-                    "corrosion_rate": random.uniform(0.001, 0.01),
-                    "barnacle_density": random.uniform(0.0, 0.5)
-                }
+                "contract_version": "1.0.0",
+                "zones": [
+                    {
+                        "zone_id": random.choice(["BOW_PORT", "MID_KEEL", "AFT_STERN"]),
+                        "state_transitions": {
+                            "delta_corrosion_mm": {"value": random.uniform(0.0001, 0.0005)},
+                            "delta_coating_mm": {"value": random.uniform(-0.00005, -0.00001)},
+                            "delta_roughness_um": {"value": random.uniform(0.001, 0.008)},
+                            "delta_fouling_coverage": {"value": random.uniform(0.00005, 0.0002)},
+                            "delta_fouling_thick_mm": {"value": random.uniform(0.00001, 0.0001)}
+                        }
+                    }
+                ]
             }
             
             prop = ProposalMessage.create(f"Sensor_{client_id}", "STATE_UPDATE", payload)

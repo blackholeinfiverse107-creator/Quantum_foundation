@@ -18,8 +18,8 @@ hub = ComputationProtocolHub(halt_on_rejection=True, halt_on_divergence=True)
 
 # 1. Initialize Distributed Nodes (Bootstrapped with Marine Adapter)
 _initial_zones = {
-    "zone_1": ZoneState(0.1, 5.0, 0.0, 1.0, 0.05),
-    "zone_2": ZoneState(0.2, 4.8, 1.2, 0.9, 0.08)
+    "BOW_PORT": ZoneState(0.12, 1.05, 35.0, 0.05, 0.02),
+    "MID_KEEL": ZoneState(0.24, 0.90, 42.5, 0.15, 0.10)
 }
 
 nodes = []
